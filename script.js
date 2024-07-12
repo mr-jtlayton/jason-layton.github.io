@@ -1,3 +1,4 @@
+// Navbar scroll effect
 window.addEventListener('scroll', function() {
     var navbar = document.getElementById('navbar');
     if (window.scrollY > 50) {
@@ -7,4 +8,23 @@ window.addEventListener('scroll', function() {
         navbar.style.backgroundColor = 'transparent';
         navbar.style.boxShadow = 'none';
     }
+});
+
+// Project badges interaction
+document.addEventListener('DOMContentLoaded', function() {
+    const projectBadges = document.querySelectorAll('.project-badge');
+    
+    projectBadges.forEach(badge => {
+        badge.addEventListener('click', function() {
+            // Close all other open badges
+            projectBadges.forEach(otherBadge => {
+                if (otherBadge !== badge && otherBadge.classList.contains('active')) {
+                    otherBadge.classList.remove('active');
+                }
+            });
+            
+            // Toggle the clicked badge
+            this.classList.toggle('active');
+        });
+    });
 });
