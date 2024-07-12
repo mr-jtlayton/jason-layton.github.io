@@ -27,20 +27,20 @@ body {
 
 /* Navbar */
 #navbar {
-    background: var(--dark-color);
+    background: transparent;
     color: #fff;
     position: fixed;
     top: 0;
     width: 100%;
     z-index: 1;
-    transition: 0.4s;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #navbar .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
+    padding: 0.5rem 2rem;
 }
 
 #navbar ul {
