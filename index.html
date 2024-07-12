@@ -3,60 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jason Layton - Portfolio</title>
+    <title>Jason Layton - Cybersecurity Professional</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <header>
-        <h1>Jason Layton</h1>
-        <nav>
+    <nav id="navbar">
+        <div class="container">
+            <h1 class="logo">Jason Layton</h1>
             <ul>
+                <li><a href="#home">Home</a></li>
                 <li><a href="#about">About</a></li>
                 <li><a href="#projects">Projects</a></li>
                 <li><a href="#contact">Contact</a></li>
             </ul>
-        </nav>
+        </div>
+    </nav>
+
+    <header id="home">
+        <div class="container">
+            <h1>Jason Layton</h1>
+            <h2>Cybersecurity Professional</h2>
+            <p>Protecting digital assets in an ever-evolving threat landscape</p>
+        </div>
     </header>
 
-    <main>
-        <section id="about">
+    <section id="about" class="bg-dark">
+        <div class="container">
             <h2>About Me</h2>
-            <p>Hi, I'm Jason Layton, a cybersecurity enthusiast transitioning from a decade-long career in Electronic Warfare with the US Navy. My journey into the world of cybersecurity is driven by a passion for protecting digital assets that are growing more important to our society everyday.
-                With 10 years of experience in signals intelligence and threat detection, I've honed my analytical skills and attention to detail in an operational environment where the pressure is on. Now, I'm applying this expertise to the cybersecurity field, focusing on areas such as network security, incident response, and threat analysis.
-                
-                My recent experience includes:
-                
-                A rewarding internship as a SOC Analyst, where I've gained hands-on experience in threat detection, incident response, and security tool implementation.
-                Developing Python scripts to automate cybersecurity tasks, demonstrating my commitment to efficiency and continuous improvement.
-                Building and maintaining a comprehensive home lab where I experiment with various security tools and scenarios provided by TryHackMe, HackTheBox, and Cybrary.
-                
-                When I'm not immersed in the world of cybersecurity, you can find me working on cars and motorcycles and helping friends design and build their PCs. I'm also passionate about educating and protecting those vulnerable to cyber attacks.
-                I hold a TS/SCI clearance and am finishing up the last few electives for a Bachelor's degree in Workforce Education from Southern Illinois University. My goal is to establish myself as a Cybersecurity professional and eventually work in security engineering.
-                I'm always eager to connect with fellow cybersecurity professionals and enthusiasts. Feel free to reach out if you'd like to discuss the latest in cyber threats, share experiences, or explore potential collaborations.
-                Thank you for checking out my page and special thanks to Michael Ricci for inspiring this!.</p>
-        </section>
+            <p>Hi, I'm Jason Layton, a cybersecurity enthusiast transitioning from a decade-long career in Electronic Warfare with the US Navy. My journey into the world of cybersecurity is driven by a passion for protecting digital assets that are growing more important to our society everyday.</p>
+            <div class="skills">
+                <div class="skill">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Threat Detection</h3>
+                </div>
+                <div class="skill">
+                    <i class="fas fa-code"></i>
+                    <h3>Python Scripting</h3>
+                </div>
+                <div class="skill">
+                    <i class="fas fa-server"></i>
+                    <h3>Network Security</h3>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <section id="projects">
+    <section id="projects">
+        <div class="container">
             <h2>My Projects</h2>
-            <div class="project">
-                <h3>Project 1</h3>
-                <p>Description of your first project.</p>
+            <div class="projects">
+                <div class="project-card">
+                    <h3>Project 1</h3>
+                    <p>Description of your first project.</p>
+                </div>
+                <div class="project-card">
+                    <h3>Project 2</h3>
+                    <p>Description of your second project.</p>
+                </div>
+                <div class="project-card">
+                    <h3>Home Lab</h3>
+                    <p>Detailed setup for cybersecurity experimentation and learning.</p>
+                </div>
             </div>
-            <div class="project">
-                <h3>Project 2</h3>
-                <p>Description of your second project.</p>
-            </div>
-            <!-- Add more project divs as needed -->
-        </section>
+        </div>
+    </section>
 
-        <section id="contact">
+    <section id="contact" class="bg-dark">
+        <div class="container">
             <h2>Contact Me</h2>
-            <p>You can reach me at: tannerlayton01@gmail.com</p>
-        </section>
-    </main>
+            <p>Feel free to reach out if you'd like to discuss cybersecurity, share experiences, or explore potential collaborations.</p>
+            <p>Email: tannerlayton01@gmail.com</p>
+            <div class="social-icons">
+                <a href="#" target="_blank"><i class="fab fa-linkedin"></i></a>
+                <a href="#" target="_blank"><i class="fab fa-github"></i></a>
+            </div>
+        </div>
+    </section>
 
     <footer>
-        <p>&copy; 2024 Jason Layton. All rights reserved.</p>
+        <div class="container">
+            <p>&copy; 2024 Jason Layton. All rights reserved.</p>
+        </div>
     </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
