@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackTheBox Mini-Module Write-Up</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .event-id {
+            display: inline-block;
+            position: relative;
+            margin: 5px;
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .event-id:hover .tooltip {
+            display: block;
+        }
+        .tooltip {
+            display: none;
+            position: absolute;
+            top: 25px;
+            left: 0;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 250px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="writeups.html">Write-Ups</a></li>
+        </ul>
+    </nav>
+    <h1>HackTheBox Mini-Module Write-Up</h1>
+    <h2>Challenge Name: Windows Event Logs Basics</h2>
+    <p><strong>Difficulty:</strong> N/A</p>
+    <p><strong>Date Completed:</strong> 7/13/2024</p>
+
+    <h3>Description</h3>
+    <p>We will investigate Windows Event Viewer</p>
+
+    <h3>Steps Taken</h3>
+    <ol>
+        <li>
+            <strong>Locating logon event, Event ID 4624, at a given time</strong>
+            <p>Created a custom filter to quickly find the event of interest. Take note of the Logon Type and Logon ID. Research what Logon Type 5 means...</p>
+            <p>Described by HTB as, "it specifies a Service logon type, suggesting that "SYSTEM" initiated a new service"</p>
+            <p>Now look for other events made by the specified user. Using a custom view was preventing me from filter the current event view. Workaround is to find the event manually.</p>
+            <p>Clear all filters. Open up Windows Log. This time "Filter Current Log..." and search the same parameters as before.</p>
+            <p><img src="images/wev_recon1.png" alt="Create custom view Screenshot"></p>
+            <p><img src="images/wev_recon2.png" alt="Filter view Screenshot"></p>
+            <p><img src="images/wev_recon3.png" alt="Logon types Screenshot"></p>
+        </li>
+        <li>
+            <strong>Alternative Method Required to Filter the Current Log</strong>
+            <p>Open the event of interest. Select the XML tab and 'Edit query manually'. Analyze the current XML filter text.</p>
+            <p>See picture below for the new text required to find events by the suspect user. It is case sensitive!!!</p>
+            <p><img src="images/wev_xml.png" alt="XML Filter Screenshot"></p>
+        </li>
+        <li>
+            <strong>Useful Windows Event Log IDs</strong>
+            <p>Windows System Logs:</p>
+            <div>
+                <span class="event-id">Event ID 1074<span class="tooltip">System Shutdown/Restart</span></span>
+                <span class="event-id">Event ID 6005<span class="tooltip">Event log service was started</span></span>
+                <span class="event-id">Event ID 6006<span class="tooltip">Event log service was stopped</span></span>
+                <span class="event-id">Event ID 6013<span class="tooltip">Windows uptime</span></span>
+                <span class="event-id">Event ID 7040<span class="tooltip">Service status change</span></span>
+                <span class="event-id">Event ID 1102<span class="tooltip">Audit log was cleared</span></span>
+                <span class="event-id">Event ID 1116<span class="tooltip">Antivirus malware detection</span></span>
+                <span class="event-id">Event ID 1118<span class="tooltip">Antivirus remediation started</span></span>
+                <span class="event-id">Event ID 1119<span class="tooltip">Antivirus remediation succeeded</span></span>
+                <span class="event-id">Event ID 1120<span class="tooltip">Antivirus remediation failed</span></span>
+                <span class="event-id">Event ID 4624<span class="tooltip">Successful Logon</span></span>
+                <span class="event-id">Event ID 4625<span class="tooltip">Failed Logon</span></span>
+                <span class="event-id">Event ID 4648<span class="tooltip">Logon using explicit credentials</span></span>
+                <span class="event-id">Event ID 4656<span class="tooltip">Handle to an object requested</span></span>
+                <span class="event-id">Event ID 4672<span class="tooltip">Special Privileges Assigned</span></span>
+                <span class="event-id">Event ID 4698<span class="tooltip">Scheduled task created</span></span>
+                <span class="event-id">Event ID 4700<span class="tooltip">Scheduled task enabled</span></span>
+                <span class="event-id">Event ID 4701<span class="tooltip">Scheduled task disabled</span></span>
+                <span class="event-id">Event ID 4702<span class="tooltip">Scheduled task updated</span></span>
+                <span class="event-id">Event ID 4719<span class="tooltip">Audit policy changed</span></span>
+                <span class="event-id">Event ID 4738<span class="tooltip">User account changed</span></span>
+                <span class="event-id">Event ID 4771<span class="tooltip">Kerberos pre-authentication failed</span></span>
+                <span class="event-id">Event ID 4776<span class="tooltip">Domain controller attempted to validate credentials</span></span>
+                <span class="event-id">Event ID 5001<span class="tooltip">Antivirus real-time protection configuration changed</span></span>
+                <span class="event-id">Event ID 5140<span class="tooltip">Network share object accessed</span></span>
+                <span class="event-id">Event ID 5142<span class="tooltip">Network share object added</span></span>
+                <span class="event-id">Event ID 5145<span class="tooltip">Network share access check</span></span>
+                <span class="event-id">Event ID 5157<span class="tooltip">Windows Filtering Platform blocked a connection</span></span>
+                <span class="event-id">Event ID 7045<span class="tooltip">Service installed</span></span>
+            </div>
+        </li>
+        <li>
+            <strong>Locating logon event at a given time</strong>
+            <p>We are looking for a Event ID 4907, for Audit Policy Change, but there are a ton so look around the same time period as our logon event. Bingo.</p>
+            <p>Next task is even more difficult since I am not comfortable with XML syntax. We are looking for an event where the previously found executable modified the audit settings of a dll file.</p>
+            <p>The event we want has the same event ID. The process name is the executable. The object name is the dll file.</p>
+            <p>I'm going to start off with a syntax just mentioning looking for the object name. Returned 2 results. G2G.</p>
+            <p><img src="images/audit_change.png" alt="4907 Policy Change"></p>
+            <p><img src="images/wevxml2.png" alt="Process modifies object"></p>
+        </li>
+    </ol>
+
+    <h3>Conclusion</h3>
+    <p>Today we practiced filtering for events of interest which required research on various Event IDs and XML syntax. Google was a good resource for the Event IDs and AI was sort of a cheat code for the XML. However, there are plenty of resources for writing correct XML syntax and using the regular filter tab in "Filter Current Log" will automatically fill in the query on the XML tab.</p>
+</body>
+</html>
