@@ -6,14 +6,23 @@
     <title>HackTheBox Mini-Module Write-Up</title>
     <link rel="stylesheet" href="styles.css">
     <style>
+        .event-id-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
         .event-id {
             display: inline-block;
             position: relative;
             margin: 5px;
-            padding: 5px 10px;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
+            padding: 10px 15px;
+            background-color: #64ffda; /* Updated color */
+            border: 1px solid #0a192f;
+            border-radius: 5px; /* Rounded corners */
+            color: #0a192f; /* Text color */
             cursor: pointer;
+            flex: 1 1 calc(20% - 10px); /* Adjust for 5 per row */
+            text-align: center;
         }
         .event-id:hover .tooltip {
             display: block;
@@ -21,14 +30,16 @@
         .tooltip {
             display: none;
             position: absolute;
-            top: 25px;
-            left: 0;
+            top: 35px;
+            left: 50%;
+            transform: translateX(-50%);
             background-color: #fff;
             border: 1px solid #ccc;
             padding: 10px;
             z-index: 10;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 250px;
+            text-align: left;
         }
     </style>
 </head>
@@ -67,8 +78,7 @@
         </li>
         <li>
             <strong>Useful Windows Event Log IDs</strong>
-            <p>Windows System Logs:</p>
-            <div>
+            <div class="event-id-container">
                 <span class="event-id">Event ID 1074<span class="tooltip">System Shutdown/Restart</span></span>
                 <span class="event-id">Event ID 6005<span class="tooltip">Event log service was started</span></span>
                 <span class="event-id">Event ID 6006<span class="tooltip">Event log service was stopped</span></span>
