@@ -5,7 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HackTheBox Mini-Module Write-Up</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
     <style>
+        /* Additional styles */
+        .content-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 2rem;
+        }
+        .toc {
+            position: sticky;
+            top: 2rem;
+            align-self: flex-start;
+            background: var(--dark-color);
+            padding: 1rem;
+            border-radius: 5px;
+            max-width: 250px;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            color: var(--light-color);
+            text-decoration: none;
+        }
+        .toc a:hover {
+            color: var(--secondary-color);
+        }
+        .main-content {
+            flex: 1;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .image-grid img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .code-snippet {
+            background: var(--dark-color);
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        .event-id-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
         .event-id-container {
             display: flex;
             flex-wrap: wrap;
@@ -50,35 +106,47 @@
             <li><a href="writeups.html">Write-Ups</a></li>
         </ul>
     </nav>
-    <h1>HackTheBox Mini-Module Write-Up</h1>
-    <h2>Challenge Name: Windows Event Logs Basics</h2>
-    <p><strong>Difficulty:</strong> N/A</p>
-    <p><strong>Date Completed:</strong> 7/13/2024</p>
+    <div class="content-wrapper">
+        <aside class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#description">Description</a></li>
+                <li><a href="#steps">Steps Taken</a></li>
+                <li><a href="#conclusion">Conclusion</a></li>
+            </ul>
+        </aside>
+        <main class="main-content">
+            <h1>HackTheBox Mini-Module Write-Up</h1>
+            <h2>Challenge Name: Windows Event Logs Basics</h2>
+            <p><strong>Difficulty:</strong> N/A</p>
+            <p><strong>Date Completed:</strong> 7/13/2024</p>
 
-    <h3>Description</h3>
-    <p>We will investigate Windows Event Viewer</p>
+            <h3 id="description">Description</h3>
+            <p>We will investigate Windows Event Viewer</p>
 
-    <h3>Steps Taken</h3>
-    <ol>
-        <li>
-            <strong>Locating logon event, Event ID 4624, at a given time</strong>
-            <p>Created a custom filter to quickly find the event of interest. Take note of the Logon Type and Logon ID. Research what Logon Type 5 means...</p>
-            <p>Described by HTB as, "it specifies a Service logon type, suggesting that "SYSTEM" initiated a new service"</p>
-            <p>Now look for other events made by the specified user. Using a custom view was preventing me from filter the current event view. Workaround is to find the event manually.</p>
-            <p>Clear all filters. Open up Windows Log. This time "Filter Current Log..." and search the same parameters as before.</p>
-            <p><img src="images/wev_recon1.png" alt="Create custom view Screenshot"></p>
-            <p><img src="images/wev_recon2.png" alt="Filter view Screenshot"></p>
-            <p><img src="images/wev_recon3.png" alt="Logon types Screenshot"></p>
-        </li>
-        <li>
-            <strong>Alternative Method Required to Filter the Current Log</strong>
-            <p>Open the event of interest. Select the XML tab and 'Edit query manually'. Analyze the current XML filter text.</p>
-            <p>See picture below for the new text required to find events by the suspect user. It is case sensitive!!!</p>
-            <p><img src="images/wev_xml.png" alt="XML Filter Screenshot"></p>
-        </li>
-        <li>
-            <strong>Useful Windows Event Log IDs</strong>
-            <div class="event-id-container">
+            <h3 id="steps">Steps Taken</h3>
+            <ol>
+                <li>
+                    <h4>Locating logon event, Event ID 4624, at a given time</h4>
+                    <p>Created a custom filter to quickly find the event of interest. Take note of the Logon Type and Logon ID. Research what Logon Type 5 means...</p>
+                    <p>Described by HTB as, "it specifies a Service logon type, suggesting that "SYSTEM" initiated a new service"</p>
+                    <p>Now look for other events made by the specified user. Using a custom view was preventing me from filter the current event view. Workaround is to find the event manually.</p>
+                    <p>Clear all filters. Open up Windows Log. This time "Filter Current Log..." and search the same parameters as before.</p>
+                    <div class="image-grid">
+                        <a href="images/wev_recon1.png" data-lightbox="recon" data-title="Create custom view"><img src="images/wev_recon1.png" alt="Create custom view Screenshot"></a>
+                        <a href="images/wev_recon2.png" data-lightbox="recon" data-title="Filter view"><img src="images/wev_recon2.png" alt="Filter view Screenshot"></a>
+                        <a href="images/wev_recon3.png" data-lightbox="recon" data-title="Logon types"><img src="images/wev_recon3.png" alt="Logon types Screenshot"></a>
+                    </div>
+                </li>
+                <li>
+                    <h4>Alternative Method Required to Filter the Current Log</h4>
+                    <p>Open the event of interest. Select the XML tab and 'Edit query manually'. Analyze the current XML filter text.</p>
+                    <p>See picture below for the new text required to find events by the suspect user. It is case sensitive!!!</p>
+                    <a href="images/wev_xml.png" data-lightbox="xml" data-title="XML Filter"><img src="images/wev_xml.png" alt="XML Filter Screenshot"></a>
+                </li>
+                <li>
+                    <h4>Useful Windows Event Log IDs</h4>
+                    <div class="event-id-container">
                 <span class="event-id">Event ID 1074<span class="tooltip">System Shutdown/Restart</span></span>
                 <span class="event-id">Event ID 6005<span class="tooltip">Event log service was started</span></span>
                 <span class="event-id">Event ID 6006<span class="tooltip">Event log service was stopped</span></span>
@@ -111,17 +179,22 @@
             </div>
         </li>
         <li>
-            <strong>Locating logon event at a given time</strong>
+            <h4>Locating logon event at a given time</h4>
             <p>We are looking for a Event ID 4907, for Audit Policy Change, but there are a ton so look around the same time period as our logon event. Bingo.</p>
             <p>Next task is even more difficult since I am not comfortable with XML syntax. We are looking for an event where the previously found executable modified the audit settings of a dll file.</p>
             <p>The event we want has the same event ID. The process name is the executable. The object name is the dll file.</p>
             <p>I'm going to start off with a syntax just mentioning looking for the object name. Returned 2 results. G2G.</p>
-            <p><img src="images/audit_change.png" alt="4907 Policy Change"></p>
-            <p><img src="images/wevxml2.png" alt="Process modifies object"></p>
+            <div class="image-grid">
+                <a href="images/audit_change.png" data-lightbox="audit" data-title="4907 Policy Change"><img src="images/audit_change.png" alt="4907 Policy Change"></a>
+                <a href="images/wevxml2.png" data-lightbox="audit" data-title="Process modifies object"><img src="images/wevxml2.png" alt="Process modifies object"></a>
+            </div>
         </li>
     </ol>
 
-    <h3>Conclusion</h3>
+    <h3 id="conclusion">Conclusion</h3>
     <p>Today we practiced filtering for events of interest which required research on various Event IDs and XML syntax. Google was a good resource for the Event IDs and AI was sort of a cheat code for the XML. However, there are plenty of resources for writing correct XML syntax and using the regular filter tab in "Filter Current Log" will automatically fill in the query on the XML tab.</p>
+</main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox-plus-jquery.min.js"></script>
 </body>
 </html>
