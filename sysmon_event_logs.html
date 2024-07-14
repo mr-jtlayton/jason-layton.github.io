@@ -1,138 +1,158 @@
-<!DOCTYPE html []>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
     <meta name="author" content="MarkdownViewer++" />
     <title>sysmon_event_logs.txt</title>
     <style type="text/css">
-            
-/* Avoid page breaks inside the most common attributes, especially for exports (i.e. PDF) */
-td, h1, h2, h3, h4, h5, p, ul, ol, li {
-    page-break-inside: avoid; 
-}
-
-        </style>
+      /* Avoid page breaks inside the most common attributes, especially for exports (i.e. PDF) */
+      td, h1, h2, h3, h4, h5, p, ul, ol, li {
+        page-break-inside: avoid;
+      }
+    </style>
   </head>
   <body>
-    <h1 id="sysmon-event-logs-viewing-a-dll-hijacking-powershell-injection-and-mimikatz-attack-write-up">[Sysmon Event Logs <em>Viewing a DLL Hijacking, Powershell Injection, and MimiKatz Attack!</em>] Write-Up</h1>
+    <h1 id="sysmon-event-logs-viewing-a-dll-hijacking-powershell-injection-and-mimikatz-attack-write-up">
+      Sysmon Event Logs <em>Viewing a DLL Hijacking, Powershell Injection, and MimiKatz Attack!</em> Write-Up
+    </h1>
     <h2 id="challenge-information">Challenge Information</h2>
     <p>
-      <strong>Platform:</strong> [HackTheBox]<br /><strong>Difficulty:</strong> [Easy]<br /><strong>Date Completed:</strong> [07/13/2024]</p>
+      <strong>Platform:</strong> HackTheBox<br />
+      <strong>Difficulty:</strong> Easy<br />
+      <strong>Date Completed:</strong> 07/13/2024
+    </p>
     <h2 id="table-of-contents">Table of Contents</h2>
     <ul>
-      <li>
-        <a href="#description">Description</a>
-      </li>
-      <li>
-        <a href="#steps-taken">Steps Taken</a>
-      </li>
-      <li>
-        <a href="#conclusion">Conclusion</a>
-      </li>
-      <li>
-        <a href="#additional-resources">Additional Resources</a>
-      </li>
+      <li><a href="#description">Description</a></li>
+      <li><a href="#steps-taken">Steps Taken</a></li>
+      <li><a href="#conclusion">Conclusion</a></li>
+      <li><a href="#additional-resources">Additional Resources</a></li>
     </ul>
     <h2 id="description">Description</h2>
-    <p>[- For this lesson we will be expanding on the Windows Event Viewer lesson. System Monitor <em>Sysmon</em> is unique because it will remain across reboots and it logs events that wouldn't appear in Event Viewer -&gt; security logs.]
-[- Sysmon uses its own set of Event IDs <em>see bottom of page for examples</em>.  ]</p>
+    <p>
+      For this lesson we will be expanding on the Windows Event Viewer lesson. System Monitor <em>Sysmon</em> is unique because it will remain across reboots and it logs events that wouldn't appear in Event Viewer -> security logs.
+      Sysmon uses its own set of Event IDs <em>see bottom of page for examples</em>.
+    </p>
     <h2 id="steps-taken">Steps Taken</h2>
-    <h3 id="getting-started-with-sysmon">1. [Getting started with Sysmon]</h3>
-    <p>[Go to Sysmon's official download page <em>linked at the bottom</em> and download. To install, verify the file path and execute the following command <em>replace your file path if different</em> C:\Tools\Sysmon\sysmon.exe -i]</p>
+    <h3 id="getting-started-with-sysmon">1. Getting started with Sysmon</h3>
+    <p>
+      Go to Sysmon's official download page <em>linked at the bottom</em> and download. To install, verify the file path and execute the following command <em>replace your file path if different</em> C:\Tools\Sysmon\sysmon.exe -i
+    </p>
     <h4 id="substep-1.1">Substep 1.1</h4>
-    <p>[- We are working with a config file from a repo posted at bottom of this page. We open the XML config file and edit Event ID 7 changing ImageLoad onmatch from <em>include</em> to <em>exclude</em>. This works kind of like a white/black list respectively. Include is the more configurative option. If the include list is empty then nothing will be logged, at least for this event ID.]</p>
+    <p>
+      We are working with a config file from a repo posted at bottom of this page. We open the XML config file and edit Event ID 7 changing ImageLoad onmatch from <em>include</em> to <em>exclude</em>. This works kind of like a white/black list respectively. Include is the more configurative option. If the include list is empty then nothing will be logged, at least for this event ID.
+    </p>
     <figure>
-  ![Sysmon Config XML Edits](images/sys_config1.png)
-  <figcaption>Notice the Note and that there are no rules listed.</figcaption></figure>
+      <img src="images/sys_config1.png" alt="Sysmon Config XML Edits" />
+      <figcaption>Notice the Note and that there are no rules listed.</figcaption>
+    </figure>
     <h4 id="substep-1.2">Substep 1.2</h4>
-    <p>[- We are interested in Event ID 7 because this catches module load events and we want to catch a DLL <em>Dynamic Link Library</em> hijack]
-[- Only Microsoft operating systems are susceptible to DLL hijacks. Attackers will replace legitimate DLLs with an infected version which will be called upon by some application, launching the malicious code.]</p>
-    <h3 id="updating-sysmon-application-with-our-modified-configuration-file-detecting-dll-hijacking">2. [Updating Sysmon application with our modified configuration file, Detecting DLL Hijacking]</h3>
-    <p>[- Run the following command in PowerShell from the sysmon folder file path: sysmon.exe -c sysmonconfig-export.xml]
-[- We will know the update was successful with the following messages <em>Configuration file validated.</em> and <em>COnfiguration updated</em>.]</p>
+    <p>
+      We are interested in Event ID 7 because this catches module load events and we want to catch a DLL <em>Dynamic Link Library</em> hijack.
+      Only Microsoft operating systems are susceptible to DLL hijacks. Attackers will replace legitimate DLLs with an infected version which will be called upon by some application, launching the malicious code.
+    </p>
+    <h3 id="updating-sysmon-application-with-our-modified-configuration-file-detecting-dll-hijacking">2. Updating Sysmon application with our modified configuration file, Detecting DLL Hijacking</h3>
+    <p>
+      Run the following command in PowerShell from the sysmon folder file path: sysmon.exe -c sysmonconfig-export.xml
+      We will know the update was successful with the following messages <em>Configuration file validated.</em> and <em>Configuration updated</em>.
+    </p>
     <h4 id="substep-2.1">Substep 2.1</h4>
-    <p>[Navigate to the Sysmon logs via Event Viewer-&gt;Application and Services -&gt; Microsoft -&gt; Windows -&gt; Sysmon. You may be surprised as I was to find that the Windows list was quite long. Make sure to open the sysmon folder and chose the log file.]
-[Check it out, an Event 7!]</p>
+    <p>
+      Navigate to the Sysmon logs via Event Viewer->Application and Services -> Microsoft -> Windows -> Sysmon. You may be surprised as I was to find that the Windows list was quite long. Make sure to open the sysmon folder and chose the log file.
+      Check it out, an Event 7!
+    </p>
     <figure>
-  ![Sysmon Event 7](images/sys_event7.png)
-  <figcaption>Notice the "Image" and "ImageLoaded". Could checking the hash value be helpful? Does the "User" give us any more insight?</figcaption></figure>
-    <p>[- Things to look for:
-<strong>ImageLoaded</strong></p>
+      <img src="images/sys_event7.png" alt="Sysmon Event 7" />
+      <figcaption>Notice the "Image" and "ImageLoaded". Could checking the hash value be helpful? Does the "User" give us any more insight?</figcaption>
+    </figure>
+    <p>Things to look for:</p>
     <ul>
-      <li>Look for DLLs loaded from unexpected or non-standard locations (e.g., user directories, temp folders, or network shares</li>
-      <li>Be suspicious of DLLs loaded from the same directory as the executable rather than system directories.
-<strong>Image Path</strong></li>
-      <li>Check if the process loading the DLL is a legitimate applciation</li>
-      <li>Verify if the process path is correct and not a masquerading executable.
-<strong>Signed and Signature Status</strong></li>
-      <li>Check if the DLL is unsigned when it should be signed</li>
-      <li>Look for mismatched signatures between the executable and the loaded DLL
-<strong>Hashes</strong></li>
-      <li>Compare hashes with known-good version of the DLL</li>
-      <li>Look for discrepancies in hash values for supposedly standard system DLLs
-<strong>TimeCreated</strong></li>
-      <li>Recent creation times for system DLLs could indicate replacement with malicious versions
-<strong>ProcessId and ProcessGuid</strong></li>
-      <li>COrrelate with other events to understand the context of the DLL load.
-<strong>User</strong></li>
-      <li>Check if the user context for the DLL load is appropriate for the application.
-<strong>Frequency and Patterns</strong></li>
-      <li>Unusual patterns or frequencies of specific DLL loads might indicate malicious activity.
-<strong>Missing DLLs</strong></li>
-      <li>Look for failed attemtps to load DLLs, which might indicate an attacker's failed hijacking attempt.
-<strong>Known Vulnerable Applications</strong></li>
-      <li>Pay extra attention to DLL loads by applications known to be vulnerable to DLL hijacking.
-]</li>
+      <li>Look for DLLs loaded from unexpected or non-standard locations (e.g., user directories, temp folders, or network shares).</li>
+      <li>Be suspicious of DLLs loaded from the same directory as the executable rather than system directories.</li>
+      <li>Check if the process loading the DLL is a legitimate application.</li>
+      <li>Verify if the process path is correct and not a masquerading executable.</li>
+      <li>Check if the DLL is unsigned when it should be signed.</li>
+      <li>Look for mismatched signatures between the executable and the loaded DLL.</li>
+      <li>Compare hashes with known-good version of the DLL.</li>
+      <li>Look for discrepancies in hash values for supposedly standard system DLLs.</li>
+      <li>Recent creation times for system DLLs could indicate replacement with malicious versions.</li>
+      <li>Correlate with other events to understand the context of the DLL load.</li>
+      <li>Check if the user context for the DLL load is appropriate for the application.</li>
+      <li>Unusual patterns or frequencies of specific DLL loads might indicate malicious activity.</li>
+      <li>Look for failed attempts to load DLLs, which might indicate an attacker's failed hijacking attempt.</li>
+      <li>Pay extra attention to DLL loads by applications known to be vulnerable to DLL hijacking.</li>
     </ul>
     <h4 id="substep-2.2">Substep 2.2</h4>
-    <p>[The next steps involve downloading a test DLL hijacking file from a GitHub repo and then replacing the Calc.exe WININET.dll with this fake, with the name changed. Both files need to be in the same folder. We used the desktop to keep it simple.</p>
+    <p>
+      The next steps involve downloading a test DLL hijacking file from a GitHub repo and then replacing the Calc.exe WININET.dll with this fake, with the name changed. Both files need to be in the same folder. We used the desktop to keep it simple.
+    </p>
     <ul>
-      <li>We open the calculator and head back to event viewer, once again looking for Event#7s]</li>
+      <li>We open the calculator and head back to event viewer, once again looking for Event#7s.</li>
     </ul>
     <figure>
-  ![WITH DLL hijacking](images/bad_wini.png)
-  <figcaption>Can you spot the differences?</figcaption></figure>
+      <img src="images/bad_wini.png" alt="WITH DLL hijacking" />
+      <figcaption>Can you spot the differences?</figcaption>
+    </figure>
     <figure>
-  ![WITHOUT DLL hijacking](images/good_wini.png)
-  <figcaption>This is the good one!</figcaption></figure>
-    <p>[<strong>IoCs</strong></p>
+      <img src="images/good_wini.png" alt="WITHOUT DLL hijacking" />
+      <figcaption>This is the good one!</figcaption>
+    </figure>
+    <p>Indicators of Compromise (IoCs):</p>
     <ul>
-      <li>Calc.exe should not be found in a writable directory, it should reside in System32</li>
-      <li>The DLL should not be loaded outside System32 by calc.exe</li>
-      <li>The signature being invalid is a huge IoC
-]</li>
+      <li>Calc.exe should not be found in a writable directory, it should reside in System32.</li>
+      <li>The DLL should not be loaded outside System32 by calc.exe.</li>
+      <li>The signature being invalid is a huge IoC.</li>
     </ul>
-    <h3 id="detecting-unmanaged-powershellc-injection">3. [Detecting Unmanaged Powershell/C# Injection]</h3>
-    <p>[From HTB, 'C# is considered a "managed" language, meaning it requires a backend runtime to execute its code. The Common Language Runtime (CLR) serves as this runtime environment. Managed code does not directly run as assembly; instead, it is compiled into a bytecode format that the runtime processes and executes. Consequently, a managed process relies on the CLR to execute C# code.']</p>
+    <h3 id="detecting-unmanaged-powershellc-injection">3. Detecting Unmanaged Powershell/C# Injection</h3>
+    <p>
+      From HTB, 'C# is considered a "managed" language, meaning it requires a backend runtime to execute its code. The Common Language Runtime (CLR) serves as this runtime environment. Managed code does not directly run as assembly; instead, it is compiled into a bytecode format that the runtime processes and executes. Consequently, a managed process relies on the CLR to execute C# code.'
+    </p>
     <figure>
-  ![Powershell Injection Indicators](images/ps_man.png)
-  <figcaption>Lots to gather here. Powershell should not be managed. Inside of Properties -&gt; Modules we see two DLLs which indicate C# is running. clr.dll and clrjit.dll</figcaption></figure>
-    <p>[- Next we run some powershell commands, using PSInject project which will allow us to transition executable from unmanaged to managed. We do this to spoolsv.exe. We will need the process ID from out process hacker application.]
-[- PSInject is a tool or technique used to inject PowerShell code into the memory of a running process. This is often used in penetration testing and red teaming to execute PowerShell scripts stealthily within the context of another process.]</p>
+      <img src="images/ps_man.png" alt="Powershell Injection Indicators" />
+      <figcaption>Lots to gather here. Powershell should not be managed. Inside of Properties -> Modules we see two DLLs which indicate C# is running. clr.dll and clrjit.dll</figcaption>
+    </figure>
+    <p>
+      Next we run some powershell commands, using PSInject project which will allow us to transition executable from unmanaged to managed. We do this to spoolsv.exe. We will need the process ID from our process hacker application.
+      PSInject is a tool or technique used to inject PowerShell code into the memory of a running process. This is often used in penetration testing and red teaming to execute PowerShell scripts stealthily within the context of another process.
+    </p>
     <figure>
-  ![Powershell Injection Underway](images/ps_in.png)
-  <figcaption>Process ID has to be found because it will differ from system to system. Then the "-PoshCode" is actually a Base64 conversion of the code that will actually be executed. This should be fun!</figcaption></figure>
+      <img src="images/ps_in.png" alt="Powershell Injection Underway" />
+      <figcaption>Process ID has to be found because it will differ from system to system. Then the "-PoshCode" is actually a Base64 conversion of the code that will actually be executed. This should be fun!</figcaption>
+    </figure>
     <figure>
-  ![Review](images/spool_in.png)
-  <figcaption>Success! We know this because the color changed and the process is know managed.</figcaption></figure>
-    <p>[- The process running the dll never did show up in sysmon. I tried sending some print jobs but no luck. Im going to use powershell to caclulate the hash of the dll located at this folder: C:\Windows\Microsoft.NET\Framework64\v4.0.30319]</p>
+      <img src="images/spool_in.png" alt="Review" />
+      <figcaption>Success! We know this because the color changed and the process is now managed.</figcaption>
+    </figure>
+    <p>
+      The process running the dll never did show up in sysmon. I tried sending some print jobs but no luck. I'm going to use powershell to calculate the hash of the dll located at this folder: C:\Windows\Microsoft.NET\Framework64\v4.0.30319.
+    </p>
     <figure>
-  ![Get that Hash!](images/ps_win.png)
-  <figcaption>Here we have the SHA256 for the dll. Bummer this was kind of cheating</figcaption></figure>
-    <h3 id="detecting-credential-dumping-attack-via-mimikatz">4. [Detecting Credential Dumping Attack via Mimikatz]</h3>
-    <p>[- We change to the Mimikatz directory and execute. We will no longer be looking for Event ID 7s. Any guess what we will be using. Reference the bottom of this page! It took me about 10 minutes of frustration to remember to update the config file for this event ID]</p>
+      <img src="images/ps_win.png" alt="Get that Hash!" />
+      <figcaption>Here we have the SHA256 for the dll. Bummer this was kind of cheating.</figcaption>
+    </figure>
+    <h3 id="detecting-credential-dumping-attack-via-mimikatz">4. Detecting Credential Dumping Attack via Mimikatz</h3>
+    <p>
+      We change to the Mimikatz directory and execute. We will no longer be looking for Event ID 7s. Any guess what we will be using. Reference the bottom of this page! It took me about 10 minutes of frustration to remember to update the config file for this event ID.
+    </p>
     <figure>
-  ![Hash Dump!](images/mimi_dump.png)
-  <figcaption>Compromising those credentials!</figcaption></figure>
-    <p>[- So this didn't work. I wasn't going to give up. With some help from AI we updated the sysmon config file further. Let's see if it works. We clear the event viewer logs once more and run mimikatz. Im able to see me executing mimikatz, but not the dump, what gives?! Surely this means the config file is not set right. Either way we completed the challenge.]</p>
+      <img src="images/mimi_dump.png" alt="Hash Dump!" />
+      <figcaption>Compromising those credentials!</figcaption>
+    </figure>
+    <p>
+      So this didn't work. I wasn't going to give up. With some help from AI we updated the sysmon config file further. Let's see if it works. We clear the event viewer logs once more and run mimikatz. I'm able to see me executing mimikatz, but not the dump, what gives?! Surely this means the config file is not set right. Either way we completed the challenge.
+    </p>
     <figure>
-  ![That's all folks!](images/defeat.png)
-  <figcaption>Some IOCs, but sadly I wasn't able to capture the events where Mimikatz commands were ran!</figcaption></figure>
+      <img src="images/defeat.png" alt="That's all folks!" />
+      <figcaption>Some IOCs, but sadly I wasn't able to capture the events where Mimikatz commands were ran!</figcaption>
+    </figure>
     <figure>
-  ![A little help from AI](images/gpt_help.png)
-  <figcaption>This is what we plugged into the config file. It didn't break the configuration, but it didn't work either</figcaption></figure>
+      <img src="images/gpt_help.png" alt="A little help from AI" />
+      <figcaption>This is what we plugged into the config file. It didn't break the configuration, but it didn't work either.</figcaption>
+    </figure>
     <h2 id="conclusion">Conclusion</h2>
-    <p>[This challenge was very beneficial because I haven't touched Sysmon in awhile and I wasn't comfortable with it which is why I was sure to document it well. I've seen .dll EDR alerts in the SOC before, but now I have a deeper understanding of the dangers that exist. We learned a little about injections via PowerShell and got to play with Mimikatz. It was a good day!]</p>
+    <p>
+      This challenge was very beneficial because I haven't touched Sysmon in awhile and I wasn't comfortable with it which is why I was sure to document it well. I've seen .dll EDR alerts in the SOC before, but now I have a deeper understanding of the dangers that exist. We learned a little about injections via PowerShell and got to play with Mimikatz. It was a good day!
+    </p>
     <h1 id="sysmon-event-ids">Sysmon Event IDs</h1>
     <!--SYSMON_ID_START-->
     <ul>
@@ -169,12 +189,12 @@ td, h1, h2, h3, h4, h5, p, ul, ol, li {
     </ul>
     <h2 id="additional-resources">Additional Resources</h2>
     <ul>
-      <li></li>
-      <li></li>
-      <li></li>
-      <li></li>
+      <li><a href="https://docs.microsoft.com/en-us/sysinternals/downloads/sysmon">Sysmon Official Page</a></li>
+      <li><a href="https://github.com/SwiftOnSecurity/sysmon-config">Sysmon Config Repo</a></li>
+      <li><a href="https://www.hackthebox.com/">HackTheBox</a></li>
+      <li><a href="https://github.com/PowerShellMafia/PowerSploit/tree/master/Exfiltration">PSInject on PowerSploit</a></li>
     </ul>
     <hr />
-    <p>[Write-Up by Jason Layton. The Challenge is from HackTheBox's SOC analyst path. Therefore it is not my content.]</p>
+    <p>Write-Up by Jason Layton. The Challenge is from HackTheBox's SOC analyst path. Therefore it is not my content.</p>
   </body>
 </html>
