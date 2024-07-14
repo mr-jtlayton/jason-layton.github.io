@@ -1,200 +1,376 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="author" content="MarkdownViewer++" />
-    <title>sysmon_event_logs.txt</title>
-    <style type="text/css">
-      /* Avoid page breaks inside the most common attributes, especially for exports (i.e. PDF) */
-      td, h1, h2, h3, h4, h5, p, ul, ol, li {
-        page-break-inside: avoid;
-      }
-    </style>
-  </head>
-  <body>
-    <h1 id="sysmon-event-logs-viewing-a-dll-hijacking-powershell-injection-and-mimikatz-attack-write-up">
-      Sysmon Event Logs <em>Viewing a DLL Hijacking, Powershell Injection, and MimiKatz Attack!</em> Write-Up
-    </h1>
-    <h2 id="challenge-information">Challenge Information</h2>
-    <p>
-      <strong>Platform:</strong> HackTheBox<br />
-      <strong>Difficulty:</strong> Easy<br />
-      <strong>Date Completed:</strong> 07/13/2024
-    </p>
-    <h2 id="table-of-contents">Table of Contents</h2>
-    <ul>
-      <li><a href="#description">Description</a></li>
-      <li><a href="#steps-taken">Steps Taken</a></li>
-      <li><a href="#conclusion">Conclusion</a></li>
-      <li><a href="#additional-resources">Additional Resources</a></li>
-    </ul>
-    <h2 id="description">Description</h2>
-    <p>
-      For this lesson we will be expanding on the Windows Event Viewer lesson. System Monitor <em>Sysmon</em> is unique because it will remain across reboots and it logs events that wouldn't appear in Event Viewer -> security logs.
-      Sysmon uses its own set of Event IDs <em>see bottom of page for examples</em>.
-    </p>
-    <h2 id="steps-taken">Steps Taken</h2>
-    <h3 id="getting-started-with-sysmon">1. Getting started with Sysmon</h3>
-    <p>
-      Go to Sysmon's official download page <em>linked at the bottom</em> and download. To install, verify the file path and execute the following command <em>replace your file path if different</em> C:\Tools\Sysmon\sysmon.exe -i
-    </p>
-    <h4 id="substep-1.1">Substep 1.1</h4>
-    <p>
-      We are working with a config file from a repo posted at bottom of this page. We open the XML config file and edit Event ID 7 changing ImageLoad onmatch from <em>include</em> to <em>exclude</em>. This works kind of like a white/black list respectively. Include is the more configurative option. If the include list is empty then nothing will be logged, at least for this event ID.
-    </p>
-    <figure>
-      <img src="images/sys_config1.png" alt="Sysmon Config XML Edits" />
-      <figcaption>Notice the Note and that there are no rules listed.</figcaption>
-    </figure>
-    <h4 id="substep-1.2">Substep 1.2</h4>
-    <p>
-      We are interested in Event ID 7 because this catches module load events and we want to catch a DLL <em>Dynamic Link Library</em> hijack.
-      Only Microsoft operating systems are susceptible to DLL hijacks. Attackers will replace legitimate DLLs with an infected version which will be called upon by some application, launching the malicious code.
-    </p>
-    <h3 id="updating-sysmon-application-with-our-modified-configuration-file-detecting-dll-hijacking">2. Updating Sysmon application with our modified configuration file, Detecting DLL Hijacking</h3>
-    <p>
-      Run the following command in PowerShell from the sysmon folder file path: sysmon.exe -c sysmonconfig-export.xml
-      We will know the update was successful with the following messages <em>Configuration file validated.</em> and <em>Configuration updated</em>.
-    </p>
-    <h4 id="substep-2.1">Substep 2.1</h4>
-    <p>
-      Navigate to the Sysmon logs via Event Viewer->Application and Services -> Microsoft -> Windows -> Sysmon. You may be surprised as I was to find that the Windows list was quite long. Make sure to open the sysmon folder and chose the log file.
-      Check it out, an Event 7!
-    </p>
-    <figure>
-      <img src="images/sys_event7.png" alt="Sysmon Event 7" />
-      <figcaption>Notice the "Image" and "ImageLoaded". Could checking the hash value be helpful? Does the "User" give us any more insight?</figcaption>
-    </figure>
-    <p>Things to look for:</p>
-    <ul>
-      <li>Look for DLLs loaded from unexpected or non-standard locations (e.g., user directories, temp folders, or network shares).</li>
-      <li>Be suspicious of DLLs loaded from the same directory as the executable rather than system directories.</li>
-      <li>Check if the process loading the DLL is a legitimate application.</li>
-      <li>Verify if the process path is correct and not a masquerading executable.</li>
-      <li>Check if the DLL is unsigned when it should be signed.</li>
-      <li>Look for mismatched signatures between the executable and the loaded DLL.</li>
-      <li>Compare hashes with known-good version of the DLL.</li>
-      <li>Look for discrepancies in hash values for supposedly standard system DLLs.</li>
-      <li>Recent creation times for system DLLs could indicate replacement with malicious versions.</li>
-      <li>Correlate with other events to understand the context of the DLL load.</li>
-      <li>Check if the user context for the DLL load is appropriate for the application.</li>
-      <li>Unusual patterns or frequencies of specific DLL loads might indicate malicious activity.</li>
-      <li>Look for failed attempts to load DLLs, which might indicate an attacker's failed hijacking attempt.</li>
-      <li>Pay extra attention to DLL loads by applications known to be vulnerable to DLL hijacking.</li>
-    </ul>
-    <h4 id="substep-2.2">Substep 2.2</h4>
-    <p>
-      The next steps involve downloading a test DLL hijacking file from a GitHub repo and then replacing the Calc.exe WININET.dll with this fake, with the name changed. Both files need to be in the same folder. We used the desktop to keep it simple.
-    </p>
-    <ul>
-      <li>We open the calculator and head back to event viewer, once again looking for Event#7s.</li>
-    </ul>
-    <figure>
-      <img src="images/bad_wini.png" alt="WITH DLL hijacking" />
-      <figcaption>Can you spot the differences?</figcaption>
-    </figure>
-    <figure>
-      <img src="images/good_wini.png" alt="WITHOUT DLL hijacking" />
-      <figcaption>This is the good one!</figcaption>
-    </figure>
-    <p>Indicators of Compromise (IoCs):</p>
-    <ul>
-      <li>Calc.exe should not be found in a writable directory, it should reside in System32.</li>
-      <li>The DLL should not be loaded outside System32 by calc.exe.</li>
-      <li>The signature being invalid is a huge IoC.</li>
-    </ul>
-    <h3 id="detecting-unmanaged-powershellc-injection">3. Detecting Unmanaged Powershell/C# Injection</h3>
-    <p>
-      From HTB, 'C# is considered a "managed" language, meaning it requires a backend runtime to execute its code. The Common Language Runtime (CLR) serves as this runtime environment. Managed code does not directly run as assembly; instead, it is compiled into a bytecode format that the runtime processes and executes. Consequently, a managed process relies on the CLR to execute C# code.'
-    </p>
-    <figure>
-      <img src="images/ps_man.png" alt="Powershell Injection Indicators" />
-      <figcaption>Lots to gather here. Powershell should not be managed. Inside of Properties -> Modules we see two DLLs which indicate C# is running. clr.dll and clrjit.dll</figcaption>
-    </figure>
-    <p>
-      Next we run some powershell commands, using PSInject project which will allow us to transition executable from unmanaged to managed. We do this to spoolsv.exe. We will need the process ID from our process hacker application.
-      PSInject is a tool or technique used to inject PowerShell code into the memory of a running process. This is often used in penetration testing and red teaming to execute PowerShell scripts stealthily within the context of another process.
-    </p>
-    <figure>
-      <img src="images/ps_in.png" alt="Powershell Injection Underway" />
-      <figcaption>Process ID has to be found because it will differ from system to system. Then the "-PoshCode" is actually a Base64 conversion of the code that will actually be executed. This should be fun!</figcaption>
-    </figure>
-    <figure>
-      <img src="images/spool_in.png" alt="Review" />
-      <figcaption>Success! We know this because the color changed and the process is now managed.</figcaption>
-    </figure>
-    <p>
-      The process running the dll never did show up in sysmon. I tried sending some print jobs but no luck. I'm going to use powershell to calculate the hash of the dll located at this folder: C:\Windows\Microsoft.NET\Framework64\v4.0.30319.
-    </p>
-    <figure>
-      <img src="images/ps_win.png" alt="Get that Hash!" />
-      <figcaption>Here we have the SHA256 for the dll. Bummer this was kind of cheating.</figcaption>
-    </figure>
-    <h3 id="detecting-credential-dumping-attack-via-mimikatz">4. Detecting Credential Dumping Attack via Mimikatz</h3>
-    <p>
-      We change to the Mimikatz directory and execute. We will no longer be looking for Event ID 7s. Any guess what we will be using. Reference the bottom of this page! It took me about 10 minutes of frustration to remember to update the config file for this event ID.
-    </p>
-    <figure>
-      <img src="images/mimi_dump.png" alt="Hash Dump!" />
-      <figcaption>Compromising those credentials!</figcaption>
-    </figure>
-    <p>
-      So this didn't work. I wasn't going to give up. With some help from AI we updated the sysmon config file further. Let's see if it works. We clear the event viewer logs once more and run mimikatz. I'm able to see me executing mimikatz, but not the dump, what gives?! Surely this means the config file is not set right. Either way we completed the challenge.
-    </p>
-    <figure>
-      <img src="images/defeat.png" alt="That's all folks!" />
-      <figcaption>Some IOCs, but sadly I wasn't able to capture the events where Mimikatz commands were ran!</figcaption>
-    </figure>
-    <figure>
-      <img src="images/gpt_help.png" alt="A little help from AI" />
-      <figcaption>This is what we plugged into the config file. It didn't break the configuration, but it didn't work either.</figcaption>
-    </figure>
-    <h2 id="conclusion">Conclusion</h2>
-    <p>
-      This challenge was very beneficial because I haven't touched Sysmon in awhile and I wasn't comfortable with it which is why I was sure to document it well. I've seen .dll EDR alerts in the SOC before, but now I have a deeper understanding of the dangers that exist. We learned a little about injections via PowerShell and got to play with Mimikatz. It was a good day!
-    </p>
-    <h1 id="sysmon-event-ids">Sysmon Event IDs</h1>
-    <!--SYSMON_ID_START-->
-    <ul>
-      <li>Event ID 1: Process creation</li>
-      <li>Event ID 2: A process changed a file creation time</li>
-      <li>Event ID 3: Network connection</li>
-      <li>Event ID 4: Sysmon service state changed</li>
-      <li>Event ID 5: Process terminated</li>
-      <li>Event ID 6: Driver loaded</li>
-      <li>Event ID 7: Image loaded</li>
-      <li>Event ID 8: CreateRemoteThread</li>
-      <li>Event ID 9: RawAccessRead</li>
-      <li>Event ID 10: ProcessAccess</li>
-      <li>Event ID 11: FileCreate</li>
-      <li>Event ID 12: RegistryEvent (Object create and delete)</li>
-      <li>Event ID 13: RegistryEvent (Value Set)</li>
-      <li>Event ID 14: RegistryEvent (Key and Value Rename)</li>
-      <li>Event ID 15: FileCreateStreamHash</li>
-      <li>Event ID 16: ServiceConfigurationChange</li>
-      <li>Event ID 17: PipeEvent (Pipe Created)</li>
-      <li>Event ID 18: PipeEvent (Pipe Connected)</li>
-      <li>Event ID 19: WmiEvent (WmiEventFilter activity detected)</li>
-      <li>Event ID 20: WmiEvent (WmiEventConsumer activity detected)</li>
-      <li>Event ID 21: WmiEvent (WmiEventConsumerToFilter activity detected)</li>
-      <li>Event ID 22: DNSEvent (DNS query)</li>
-      <li>Event ID 23: FileDelete (File Delete archived)</li>
-      <li>Event ID 24: ClipboardChange (New content in the clipboard)</li>
-      <li>Event ID 25: ProcessTampering (Process image change)</li>
-      <li>Event ID 26: FileDeleteDetected (File Delete logged)</li>
-      <li>Event ID 27: FileBlockExecutable</li>
-      <li>Event ID 28: FileBlockShredding</li>
-      <li>Event ID 29: FileExecutableDetected</li>
-      <li>Event ID 255: Error</li>
-    </ul>
-    <h2 id="additional-resources">Additional Resources</h2>
-    <ul>
-      <li><a href="https://docs.microsoft.com/en-us/sysinternals/downloads/sysmon">Sysmon Official Page</a></li>
-      <li><a href="https://github.com/SwiftOnSecurity/sysmon-config">Sysmon Config Repo</a></li>
-      <li><a href="https://www.hackthebox.com/">HackTheBox</a></li>
-      <li><a href="https://github.com/PowerShellMafia/PowerSploit/tree/master/Exfiltration">PSInject on PowerSploit</a></li>
-    </ul>
-    <hr />
-    <p>Write-Up by Jason Layton. The Challenge is from HackTheBox's SOC analyst path. Therefore it is not my content.</p>
-  </body>
-</html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sysmon Event Logs Write-Up</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="description" content="A detailed write-up on Sysmon Event Logs, covering DLL Hijacking, Powershell Injection, and MimiKatz Attack.">
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="index.html#home">Home</a></li>
+            <li><a href="index.html#about">About</a></li>
+            <li><a href="index.html#projects">Projects</a></li>
+            <li><a href="writeups.html">Write-Ups</a></li>
+        </ul>
+    </nav>
+
+    <div class="content-wrapper">
+        <aside class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#challenge-information">Challenge Information</a></li>
+                <li><a href="#description">Description</a></li>
+                <li><a href="#steps-taken">Steps Taken</a></li>
+                <li><a href="#conclusion">Conclusion</a></li>
+                <li><a href="#sysmon-event-ids">Sysmon Event IDs</a></li>
+                <li><a href="#additional-resources">Additional Resources</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <h1>Sysmon Event Logs <em>Viewing a DLL Hijacking, Powershell Injection, and MimiKatz Attack!</em> Write-Up</h1>
+
+            <section id="challenge-information">
+                <h2>Challenge Information</h2>
+                <p><strong>Platform:</strong> HackTheBox<br>
+                <strong>Difficulty:</strong> Easy<br>
+                <strong>Date Completed:</strong> 07/13/2024</p>
+            </section>
+
+            <section id="description">
+                <h2>Description</h2>
+                <p>For this lesson we will be expanding on the Windows Event Viewer lesson. System Monitor <em>Sysmon</em> is unique because it will remain across reboots and it logs events that wouldn't appear in Event Viewer -> security logs. Sysmon uses its own set of Event IDs <em>see bottom of page for examples</em>.</p>
+            </section>
+
+            <section id="steps-taken">
+                <h2>Steps Taken</h2>
+
+                <h3>1. Getting started with Sysmon</h3>
+                <p>Go to Sysmon's official download page (linked at the bottom) and download. To install, verify the file path and execute the following command (replace your file path if different):</p>
+                <pre><code>C:\Tools\Sysmon\sysmon.exe -i</code></pre>
+
+                <h4>Substep 1.1</h4>
+                <p>We are working with a config file from a repo posted at the bottom of this page. We open the XML config file and edit Event ID 7 changing ImageLoad onmatch from <em>include</em> to <em>exclude</em>. This works kind of like a white/black list respectively. Include is the more configurative option. If the include list is empty then nothing will be logged, at least for this event ID.</p>
+
+                <figure>
+                    <img src="images/sys_config1.png" alt="Sysmon Config XML Edits">
+                    <figcaption>Notice the Note and that there are no rules listed.</figcaption>
+                </figure>
+
+                <h4>Substep 1.2</h4>
+                <p>We are interested in Event ID 7 because this catches module load events and we want to catch a DLL <em>Dynamic Link Library</em> hijack. Only Microsoft operating systems are susceptible to DLL hijacks. Attackers will replace legitimate DLLs with an infected version which will be called upon by some application, launching the malicious code.</p>
+
+                <h3>2. Updating Sysmon application with our modified configuration file, Detecting DLL Hijacking</h3>
+                <p>Run the following command in PowerShell from the sysmon folder file path:</p>
+                <pre><code>sysmon.exe -c sysmonconfig-export.xml</code></pre>
+                <p>We will know the update was successful with the following messages <em>Configuration file validated.</em> and <em>Configuration updated</em>.</p>
+
+                <h4>Substep 2.1</h4>
+                <p>Navigate to the Sysmon logs via Event Viewer->Application and Services -> Microsoft -> Windows -> Sysmon. You may be surprised as I was to find that the Windows list was quite long. Make sure to open the sysmon folder and chose the log file. Check it out, an Event 7!</p>
+
+                <figure>
+                    <img src="images/sys_event7.png" alt="Sysmon Event 7">
+                    <figcaption>Notice the "Image" and "ImageLoaded". Could checking the hash value be helpful? Does the "User" give us any more insight?</figcaption>
+                </figure>
+
+                <p>Things to look for:</p>
+                <ul>
+                    <li>Look for DLLs loaded from unexpected or non-standard locations (e.g., user directories, temp folders, or network shares).</li>
+                    <li>Be suspicious of DLLs loaded from the same directory as the executable rather than system directories.</li>
+                    <li>Check if the process loading the DLL is a legitimate application.</li>
+                    <li>Verify if the process path is correct and not a masquerading executable.</li>
+                    <li>Check if the DLL is unsigned when it should be signed.</li>
+                    <li>Look for mismatched signatures between the executable and the loaded DLL.</li>
+                    <li>Compare hashes with known-good version of the DLL.</li>
+                    <li>Look for discrepancies in hash values for supposedly standard system DLLs.</li>
+                    <li>Recent creation times for system DLLs could indicate replacement with malicious versions.</li>
+                    <li>Correlate with other events to understand the context of the DLL load.</li>
+                    <li>Check if the user context for the DLL load is appropriate for the application.</li>
+                    <li>Unusual patterns or frequencies of specific DLL loads might indicate malicious activity.</li>
+                    <li>Look for failed attempts to load DLLs, which might indicate an attacker's failed hijacking attempt.</li>
+                    <li>Pay extra attention to DLL loads by applications known to be vulnerable to DLL hijacking.</li>
+                </ul>
+
+                <h4>Substep 2.2</h4>
+                <p>The next steps involve downloading a test DLL hijacking file from a GitHub repo and then replacing the Calc.exe WININET.dll with this fake, with the name changed. Both files need to be in the same folder. We used the desktop to keep it simple.</p>
+                <ul>
+                    <li>We open the calculator and head back to event viewer, once again looking for Event#7s.</li>
+                </ul>
+
+                <figure>
+                    <img src="images/bad_wini.png" alt="WITH DLL hijacking">
+                    <figcaption>Can you spot the differences?</figcaption>
+                </figure>
+
+                <figure>
+                    <img src="images/good_wini.png" alt="WITHOUT DLL hijacking">
+                    <figcaption>This is the good one!</figcaption>
+                </figure>
+
+                <p>Indicators of Compromise (IoCs):</p>
+                <ul>
+                    <li>Calc.exe should not be found in a writable directory, it should reside in System32.</li>
+                    <li>The DLL should not be loaded outside System32 by calc.exe.</li>
+                    <li>The signature being invalid is a huge IoC.</li>
+                </ul>
+
+                <h3>3. Detecting Unmanaged Powershell/C# Injection</h3>
+                <p>From HTB, 'C# is considered a "managed" language, meaning it requires a backend runtime to execute its code. The Common Language Runtime (CLR) serves as this runtime environment. Managed code does not directly run as assembly; instead, it is compiled into a bytecode format that the runtime processes and executes. Consequently, a managed process relies on the CLR to execute C# code.'</p>
+
+                <figure>
+                    <img src="images/ps_man.png" alt="Powershell Injection Indicators">
+                    <figcaption>Lots to gather here. Powershell should not be managed. Inside of Properties -> Modules we see two DLLs which indicate C# is running. clr.dll and clrjit.dll</figcaption>
+                </figure>
+
+                <p>Next we run some powershell commands, using PSInject project which will allow us to transition executable from unmanaged to managed. We do this to spoolsv.exe. We will need the process ID from our process hacker application. PSInject is a tool or technique used to inject PowerShell code into the memory of a running process. This is often used in penetration testing and red teaming to execute PowerShell scripts stealthily within the context of another process.</p>
+
+                <figure>
+                    <img src="images/ps_in.png" alt="Powershell Injection Underway">
+                    <figcaption>Process ID has to be found because it will differ from system to system. Then the "-PoshCode" is actually a Base64 conversion of the code that will actually be executed. This should be fun!</figcaption>
+                </figure>
+
+                <figure>
+                    <img src="images/spool_in.png" alt="Review">
+                    <figcaption>Success! We know this because the color changed and the process is now managed.</figcaption>
+                </figure>
+
+                <p>The process running the dll never did show up in sysmon. I tried sending some print jobs but no luck. I'm going to use powershell to calculate the hash of the dll located at this folder: C:\Windows\Microsoft.NET\Framework64\v4.0.30319.</p>
+
+                <figure>
+                    <img src="images/ps_win.png" alt="Get that Hash!">
+                    <figcaption>Here we have the SHA256 for the dll. Bummer this was kind of cheating.</figcaption>
+                </figure>
+
+                <h3>4. Detecting Credential Dumping Attack via Mimikatz</h3>
+                <p>We change to the Mimikatz directory and execute. We will no longer be looking for Event ID 7s. Any guess what we will be using. Reference the bottom of this page! It took me about 10 minutes of frustration to remember to update the config file for this event ID.</p>
+
+                <figure>
+                    <img src="images/mimi_dump.png" alt="Hash Dump!">
+                    <figcaption>Compromising those credentials!</figcaption>
+                </figure>
+
+                <p>So this didn't work. I wasn't going to give up. With some help from AI we updated the sysmon config file further. Let's see if it works. We clear the event viewer logs once more and run mimikatz. I'm able to see me executing mimikatz, but not the dump, what gives?! Surely this means the config file is not set right. Either way we completed the challenge.</p>
+
+                <figure>
+                    <img src="images/defeat.png" alt="That's all folks!">
+                    <figcaption>Some IOCs, but sadly I wasn't able to capture the events where Mimikatz commands were ran!</figcaption>
+                </figure>
+
+                <figure>
+                    <img src="images/gpt_help.png" alt="A little help from AI">
+                    <figcaption>This is what we plugged into the config file. It didn't break the configuration, but it didn't work either.</figcaption>
+                </figure>
+            </section>
+
+            <section id="conclusion">
+                <h2>Conclusion</h2>
+                <p>This challenge was very beneficial because I haven't touched Sysmon in awhile and I wasn't comfortable with it which is why I was sure to document it well. I've seen .dll EDR alerts in the SOC before, but now I have a deeper understanding of the dangers that exist. We learned a little about injections via PowerShell and got to play with Mimikatz. It was a good day!</p>
+            </section>
+
+            <section id="sysmon-event-ids">
+              <h2>Sysmon Event IDs</h2>
+              <div class="event-id-container">
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 1</div>
+                          <div class="event-id-card-back">Process creation</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 2</div>
+                          <div class="event-id-card-back">A process changed a file creation time</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 3</div>
+                          <div class="event-id-card-back">Network connection</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 4</div>
+                          <div class="event-id-card-back">Sysmon service state changed</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 5</div>
+                          <div class="event-id-card-back">Process terminated</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 6</div>
+                          <div class="event-id-card-back">Driver loaded</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 7</div>
+                          <div class="event-id-card-back">Image loaded</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 8</div>
+                          <div class="event-id-card-back">CreateRemoteThread</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 9</div>
+                          <div class="event-id-card-back">RawAccessRead</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 10</div>
+                          <div class="event-id-card-back">ProcessAccess</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 11</div>
+                          <div class="event-id-card-back">FileCreate</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 12</div>
+                          <div class="event-id-card-back">RegistryEvent (Object create and delete)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 13</div>
+                          <div class="event-id-card-back">RegistryEvent (Value Set)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 14</div>
+                          <div class="event-id-card-back">RegistryEvent (Key and Value Rename)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 15</div>
+                          <div class="event-id-card-back">FileCreateStreamHash</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 16</div>
+                          <div class="event-id-card-back">ServiceConfigurationChange</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 17</div>
+                          <div class="event-id-card-back">PipeEvent (Pipe Created)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 18</div>
+                          <div class="event-id-card-back">PipeEvent (Pipe Connected)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 19</div>
+                          <div class="event-id-card-back">WmiEvent (WmiEventFilter activity detected)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 20</div>
+                          <div class="event-id-card-back">WmiEvent (WmiEventConsumer activity detected)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 21</div>
+                          <div class="event-id-card-back">WmiEvent (WmiEventConsumerToFilter activity detected)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 22</div>
+                          <div class="event-id-card-back">DNSEvent (DNS query)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 23</div>
+                          <div class="event-id-card-back">FileDelete (File Delete archived)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 24</div>
+                          <div class="event-id-card-back">ClipboardChange (New content in the clipboard)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 25</div>
+                          <div class="event-id-card-back">ProcessTampering (Process image change)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 26</div>
+                          <div class="event-id-card-back">FileDeleteDetected (File Delete logged)</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 27</div>
+                          <div class="event-id-card-back">FileBlockExecutable</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 28</div>
+                          <div class="event-id-card-back">FileBlockShredding</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 29</div>
+                          <div class="event-id-card-back">FileExecutableDetected</div>
+                      </div>
+                  </div>
+                  <div class="event-id-card">
+                      <div class="event-id-card-inner">
+                          <div class="event-id-card-front">Event ID 255</div>
+                          <div class="event-id-card-back">Error</div>
+                      </div>
+                  </div>
+              </div>
+          </section>
+
+            <section id="additional-resources">
+              <h2>Additional Resources</h2>
+              <ul>
+                  <li><a href="https://docs.microsoft.com/en-us/sysinternals/downloads/sysmon" target="_blank">Sysmon Download & Details Page</a></li>
+                  <li><a href="https://github.com/SwiftOnSecurity/sysmon-config" target="_blank">Sysmon Config Repo</a></li>
+                  <li><a href="https://www.wietzebeukema.nl/blog/hijacking-dlls-in-windows" target="_blank">Blog on DLL Hijacking</a></li>
+                  <li><a href="https://github.com/PowerShellMafia/PowerSploit/tree/master/Exfiltration" target="_blank">PSInject on PowerSploit</a></li>
+              </ul>
+          </section>
+          
+          <hr>
+          
+          <footer>
+              <p>Write-Up by Jason Layton. The Challenge is from HackTheBox's SOC analyst path. Therefore it is not my content.</p>
+          </footer>
+          <link rel="stylesheet" href="styles.css">
+        </body>
+      </html>
