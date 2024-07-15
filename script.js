@@ -34,19 +34,38 @@ document.addEventListener('DOMContentLoaded', function() {
         sysmonIds.forEach(li => {
             const text = li.textContent;
             const [id, description] = text.split(': ');
-            const span = document.createElement('span');
-            span.className = 'event-id';
-            span.textContent = id;
-            const tooltip = document.createElement('span');
-            tooltip.className = 'tooltip';
-            tooltip.textContent = description;
-            span.appendChild(tooltip);
+            const eventId = document.createElement('div');
+            eventId.className = 'event-id';
+            
+            const front = document.createElement('div');
+            front.className = 'event-id-front';
+            front.textContent = id;
+            
+            const back = document.createElement('div');
+            back.className = 'event-id-back';
+            back.textContent = description;
+            
+            eventId.appendChild(front);
+            eventId.appendChild(back);
+            
             li.textContent = '';
-            li.appendChild(span);
+            li.appendChild(eventId);
+            
+            // Add flip functionality
+            eventId.addEventListener('click', function() {
+                this.classList.toggle('flipped');
+            });
         });
     }
+
+    // Add flip functionality to all event-id elements
+    const allEventIds = document.querySelectorAll('.event-id');
+    allEventIds.forEach(eventId => {
+        eventId.addEventListener('click', function() {
+            this.classList.toggle('flipped');
+        });
+    });
 });
-    
         
         
         
