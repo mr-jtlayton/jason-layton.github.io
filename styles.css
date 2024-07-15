@@ -368,24 +368,40 @@ footer {
     border-radius: 5px;
     text-align: center;
     font-weight: bold;
-    transition: background-color 0.3s ease;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    position: relative;
+    height: 60px; /* Adjust as needed */
 }
 
-.event-id .tooltip {
-    visibility: hidden;
-    width: 200px;
+.event-id-front,
+.event-id-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+}
+
+.event-id-front {
+    background-color: var(--secondary-color);
+    color: var(--dark-color);
+}
+
+.event-id-back {
     background-color: var(--dark-color);
     color: var(--light-color);
-    text-align: center;
-    border-radius: 6px;
+    transform: rotateY(180deg);
     padding: 5px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%;
-    left: 50%;
-    margin-left: -100px;
-    opacity: 0;
-    transition: opacity 0.3s;
+    font-size: 0.8em;
+}
+
+.event-id.flipped {
+    transform: rotateY(180deg);
 }
 
 .event-id:hover {
